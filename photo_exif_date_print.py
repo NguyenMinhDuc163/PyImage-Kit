@@ -42,23 +42,29 @@ def get_date_of_image(file):
 def put_date(file, date):
     base_img_cv2 = cv2.imread(file)
     base_img = Image.open(file).convert('RGBA')
-    txt = Image.new('RGB', base_img.size, (0, 0, 0))
+    txt = Image.new('RGBA', base_img.size, (0, 0, 0, 0))  # Đảm bảo nền trong suốt
     draw = ImageDraw.Draw(txt)
 
     # Sử dụng font hệ thống hoặc font mặc định nếu không tìm thấy
     try:
-        fnt = ImageFont.truetype("arial.ttf", size=(int)((base_img.size[0] + base_img.size[1]) / 100))
+        fnt = ImageFont.truetype("arial.ttf", size=int((base_img.size[0] + base_img.size[1]) / 100))
     except IOError:
         print("Font Arial không tìm thấy. Đang dùng font mặc định.")
         fnt = ImageFont.load_default()
 
-    textw, texth = draw.textsize(date, font=fnt)
+    # Tính kích thước văn bản với `textbbox`
+    bbox = draw.textbbox((0, 0), date, font=fnt)
+    textw, texth = bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+    # Vẽ văn bản vào vị trí mong muốn
     draw.text(((base_img.size[0] * 0.95 - textw), (base_img.size[1] * 0.95 - texth)),
               date, font=fnt, fill=font_color)
 
+    # Kết hợp hình ảnh gốc và lớp văn bản
     txt_array = np.array(txt)
-    output_img = cv2.addWeighted(base_img_cv2, 1.0, txt_array, 1.0, 0)
+    output_img = cv2.addWeighted(base_img_cv2, 1.0, txt_array[:, :, :3], 1.0, 0)
     return output_img
+
 
 def save_with_unique_name(directory, filename, img):
     name, ext = os.path.splitext(filename)

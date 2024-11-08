@@ -22,6 +22,7 @@ from photo_cat import combine_photos
 from filter_3by3 import apply_3x3_filter
 from photo_date_print import print_text
 from watershed import watershed
+from photo_exif_date_print import get_date_of_image, put_date, save_with_unique_name, get_exif_of_image
 
 
 def measure_color_average(image_path, color_space="rgb"):
@@ -122,6 +123,10 @@ class ImageProcessorApp:
         # Tạo các thành phần giao diện khác
         self.create_widgets()
 
+        self.clear_button = tk.Button(self.root, text="Clear Data", command=self.clear_data)
+        self.clear_button.pack(side=tk.BOTTOM, anchor='se', padx=10, pady=10)
+
+
     def load_image(self):
         file_path = filedialog.askopenfilename()
         if file_path:
@@ -160,6 +165,17 @@ class ImageProcessorApp:
                 self.show_image(self.original_image, self.original_canvas)
                 self.processed_image = None
                 self.processed_canvas.config(image='')
+
+    def display_exif_info(self, image_path):
+        # Lấy thông tin EXIF từ ảnh
+        exif_info = get_exif_of_image(image_path)
+
+        # Xóa nội dung hiện tại của exif_text nếu có
+        self.exif_text.delete('1.0', tk.END)
+
+        # Thêm thông tin EXIF vào hộp văn bản
+        for key, value in exif_info.items():
+            self.exif_text.insert(tk.END, f"{key}: {value}\n")
 
     def resize_image(self, src, w_ratio, h_ratio):
         """Resize image based on width and height ratio."""
@@ -207,6 +223,28 @@ class ImageProcessorApp:
             self.show_image(self.processed_image, self.processed_canvas)
             print("Ảnh đã được kết hợp và hiển thị.")
             self.selected_images.clear()  # Xóa danh sách ảnh sau khi kết hợp
+
+    def clear_data(self):
+        # Xóa ảnh gốc và ảnh đã xử lý
+        self.original_image = None
+        self.processed_image = None
+        self.image_path = None
+        self.image_path1 = None
+        self.image_path2 = None
+
+        # Xóa nội dung hiển thị trên canvas
+        self.original_canvas.config(image='')
+        self.processed_canvas.config(image='')
+
+        # Xóa danh sách ảnh đã chọn và các nhãn hiển thị trong Combine Photos mà không xóa khung `selected_images_frame`
+        self.selected_images.clear()
+        for label in self.selected_image_labels:
+            label.pack_forget()  # Ẩn nhãn khỏi giao diện
+            label.destroy()  # Xóa nhãn hoàn toàn
+        self.selected_image_labels.clear()
+
+        # Thông báo xác nhận
+        print("Dữ liệu đã được xóa và giao diện đã được làm mới.")
 
     def sift_matching(self, img1_path, img2_path):
         # Đọc ảnh từ đường dẫn
@@ -454,6 +492,26 @@ class ImageProcessorApp:
 
             print("Watershed processing completed and images saved.")
             return
+        elif selected_function == "Print Date from EXIF":
+            date = get_date_of_image(self.image_path)
+
+            # Hiển thị thông tin EXIF vào hộp văn bản exif_text
+            self.display_exif_info(self.image_path)
+
+            if date:
+                output_img = put_date(self.image_path, date)
+                prefix = "date_exif"
+                if output_img is not None:
+                    self.processed_image = output_img
+                    self.show_image(self.processed_image, self.processed_canvas)
+                    save_with_unique_name('output/photo',
+                                          f"{date.replace(':', '_').replace(' ', '_')}_{os.path.basename(self.image_path)}",
+                                          output_img)
+                    print("Ảnh đã được thêm ngày EXIF và lưu lại.")
+            else:
+                print("Không tìm thấy ngày trong dữ liệu EXIF của ảnh.")
+
+
 
 
 
@@ -518,7 +576,8 @@ class ImageProcessorApp:
         self.function_var.set("Grayscale")
 
         functions = ["Grayscale", "Sepia", "Color Swap", "Extract Color", "Face Crop", "Face Crop (Raspi)", "Face Detection", "Face Detect (Save)"
-            , "Face Detect (Draw Rectangle)", "3x3 Filter", "Average Color" , "Combine Photos","Print Text" , "Resize Image" , "SIFT Feature Matching" , "Watershed"]
+            , "Face Detect (Draw Rectangle)", "3x3 Filter", "Average Color" , "Combine Photos","Print Text" , "Resize Image" , "SIFT Feature Matching" ,
+                     "Watershed", "Print Date from EXIF"]
 
         self.function_menu = ttk.Combobox(self.function_frame, textvariable=self.function_var, values=functions, state="readonly")
         self.function_menu.pack(pady=5)
@@ -653,9 +712,13 @@ class ImageProcessorApp:
                 self.image_selection_stage = 1  # Đặt lại để chọn từ đầu
                 self.image_path1 = None
                 self.image_path2 = None
+
+
         else:
             self.is_sift_feature_matching = False
-
+        if selected_function == "Print Date from EXIF":
+            self.exif_text = tk.Text(self.params_frame, wrap=tk.WORD, width=50, height=10)
+            self.exif_text.pack(pady=10)
     def open_camera_face_detection(self):
         face_detect_camera()
 

@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from numpy import genfromtxt  # Sửa import từ numpy thay vì scipy
 
 # read csv file
-d = genfromtxt("code_test.csv", delimiter=",")
+d = genfromtxt("input/code_test.csv", delimiter=",")
 
 # make graph
 fig = pyplot.figure()
