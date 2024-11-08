@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 import cv2
 import sys
 import os
@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ExifTags import TAGS
 
-#python .\photo_exif_date_print.py .\test.jpg
+
 font_color = (255, 255, 255)
 
 def get_exif(file, field):
@@ -42,25 +42,25 @@ def get_date_of_image(file):
 def put_date(file, date):
     base_img_cv2 = cv2.imread(file)
     base_img = Image.open(file).convert('RGBA')
-    txt = Image.new('RGBA', base_img.size, (0, 0, 0, 0))  # Đảm bảo nền trong suốt
+    txt = Image.new('RGBA', base_img.size, (0, 0, 0, 0))  
     draw = ImageDraw.Draw(txt)
 
-    # Sử dụng font hệ thống hoặc font mặc định nếu không tìm thấy
+    
     try:
         fnt = ImageFont.truetype("arial.ttf", size=int((base_img.size[0] + base_img.size[1]) / 100))
     except IOError:
         print("Font Arial không tìm thấy. Đang dùng font mặc định.")
         fnt = ImageFont.load_default()
 
-    # Tính kích thước văn bản với `textbbox`
+    
     bbox = draw.textbbox((0, 0), date, font=fnt)
     textw, texth = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-    # Vẽ văn bản vào vị trí mong muốn
+    
     draw.text(((base_img.size[0] * 0.95 - textw), (base_img.size[1] * 0.95 - texth)),
               date, font=fnt, fill=font_color)
 
-    # Kết hợp hình ảnh gốc và lớp văn bản
+    
     txt_array = np.array(txt)
     output_img = cv2.addWeighted(base_img_cv2, 1.0, txt_array[:, :, :3], 1.0, 0)
     return output_img
@@ -82,19 +82,19 @@ if __name__ == '__main__':
         print("Usage: $ python " + param[0] + " sample.jpg")
         quit()
 
-    # Đảm bảo thư mục output/photo tồn tại
+    
     output_dir = 'output/photo'
     os.makedirs(output_dir, exist_ok=True)
 
     try:
-        # Lấy ngày từ EXIF
+        
         date = get_date_of_image(param[1])
         if date:
             output_img = put_date(param[1], date)
             output_filename = f"{date.replace(':', '_').replace(' ', '_')}_{os.path.basename(param[1])}"
             save_with_unique_name(output_dir, output_filename, output_img)
         else:
-            # Nếu không có ngày trong EXIF, lưu ảnh với tiền tố 'nodate_'
+            
             print("No date found in EXIF data.")
             output_img = cv2.imread(param[1])
             output_filename = f"nodate_{os.path.basename(param[1])}"

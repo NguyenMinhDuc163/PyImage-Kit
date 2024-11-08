@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
+
 import cv2
 import sys
 import os
 from os import path
 import random
 
-# Đặt đường dẫn tới thư mục chứa các tệp cascade
+
 cascades_dir = path.join("cascades")
 
-color = (255, 255, 255)  # Màu của hình chữ nhật khi phát hiện khuôn mặt
+color = (255, 255, 255)  
 
 
 def face_detect(file):
@@ -18,12 +18,12 @@ def face_detect(file):
     cascade_e = cv2.CascadeClassifier(path.join(cascades_dir, 'haarcascade_eye.xml'))
 
     facerect = cascade_f.detectMultiScale(image_gray, scaleFactor=1.08, minNeighbors=1, minSize=(50, 50))
-    detected_faces = []  # Danh sách lưu các khuôn mặt được phát hiện
+    detected_faces = []  
 
     if len(facerect) > 0:
         for rect in facerect:
             x, y, w, h = rect
-            # Kiểm tra mắt để xác nhận đó là khuôn mặt
+            
             y_offset = int(h * 0.1)
             eye_area = image_gray[y + y_offset: y + h, x: x + w]
             eyes = cascade_e.detectMultiScale(eye_area, 1.05)
@@ -31,7 +31,7 @@ def face_detect(file):
 
             if len(eyes) > 0:
                 image_face = image[y:y + h, x:x + h]
-                detected_faces.append(image_face)  # Thêm khuôn mặt vào danh sách
+                detected_faces.append(image_face)  
 
     return detected_faces
 

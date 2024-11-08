@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+
 import cv2
 import sys
 from os import path, makedirs
 import random
 
-# python .\face_crop_raspi.py .\test.jpg
 
-# Đặt đường dẫn cascades thành thư mục trong dự án
+
+
 cascades_dir = path.join("cascades")
 
 
@@ -20,21 +20,21 @@ def face_detect(file):
     print("face rectangle")
     print(facerect)
 
-    # Danh sách để lưu các khuôn mặt cắt được
+    
     cropped_faces = []
 
     if len(facerect) > 0:
         for rect in facerect:
             x, y, w, h = rect
-            # eyes in face?
+            
             roi = image_gray[y: y + h, x: x + w]
             eyes = cascade_e.detectMultiScale(roi, scaleFactor=1.05, minSize=(20, 20))
-            # Kiểm tra xem có nhiều hơn 1 mắt trong khuôn mặt không
+            
             if len(eyes) > 1:
                 image_face = image[y:y + h, x:x + w]
-                cropped_faces.append(image_face)  # Thêm ảnh khuôn mặt vào danh sách
+                cropped_faces.append(image_face)  
 
-    return cropped_faces  # Trả về danh sách các khuôn mặt đã cắt
+    return cropped_faces  
 
 
 

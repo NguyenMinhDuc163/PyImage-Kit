@@ -2,14 +2,14 @@ from PIL import Image
 import numpy as np
 import sys
 import os
-# python .\filter_3by3.py .\test.jpg
-# Bộ lọc
+
+
 filter = [0, 1, 0, 1, -4, 1, 0, 1, 0]
 
 from PIL import Image
 import numpy as np
 
-# Bộ lọc 3x3
+
 filter = [0, 1, 0, 1, -4, 1, 0, 1, 0]
 
 def apply_3x3_filter(src):
@@ -51,20 +51,20 @@ if __name__ == '__main__':
         print("Usage: $ python " + param[0] + " sample.jpg")
         quit()
 
-    # Mở tệp ảnh đầu vào
+    
     try:
         input_img = Image.open(param[1])
     except:
         print('Failed to load %s' % param[1])
         quit()
 
-    # Xử lý ảnh
+    
     output_img = apply_3x3_filter(input_img)
 
-    # Tách tên file và lưu vào thư mục output/other
+    
     base_name = os.path.basename(param[1])
     output_dir = "output/other"
-    os.makedirs(output_dir, exist_ok=True)  # Tạo thư mục output/other nếu chưa tồn tại
+    os.makedirs(output_dir, exist_ok=True)  
     output_path = os.path.join(output_dir, f"filtered_{base_name}")
     output_img.save(output_path)
     output_img.show()

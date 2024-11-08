@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 WIDTH_RATIO=10
 HEIGHT_RATIO=10
