@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import os
 
-#python .\pillow_numpy_basic.py .\test.jpg
+
 
 def image_process(src):
     width, height = src.size
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         print("Usage: $ python " + param[0] + " sample.jpg")
         quit()
 
-    # Mở file ảnh
+    
     try:
         input_img = Image.open(param[1])
     except:
@@ -46,13 +46,13 @@ if __name__ == '__main__':
         print('Failed to load %s' % param[1])
         quit()
 
-    # Xử lý ảnh
+    
     output_img = image_process(input_img)
 
-    # Đảm bảo thư mục output/other tồn tại
+    
     output_dir = 'output/other'
     os.makedirs(output_dir, exist_ok=True)
 
-    # Lưu ảnh với tên không trùng lặp
+    
     output_filename = f"process_{os.path.basename(param[1])}"
     save_with_unique_name(output_dir, output_filename, output_img)

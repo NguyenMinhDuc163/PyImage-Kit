@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 echo face crop processing...
 for f in *.JPG

@@ -1,4 +1,4 @@
-#!/bin/bash
+
 
 cmd=face_crop_simple.py
 echo face crop processing...

@@ -1,6 +1,6 @@
+
 # Bộ công cụ xử lý cơ bản ảnh bằng Python
 
-## Thành viên nhóm 17 - Môn Xử lý ảnh
 
 - Nguyễn Minh Đức - B21DCCN249
 
@@ -8,13 +8,13 @@
 
 - Vũ Công Duy - B21DCCN302
 
-## Đề tài: Bộ công cụ xử lý cơ bản ảnh bằng Python
+
 
 ---
 
-## Hướng dẫn sử dụng
 
-### 1. Tạo và kích hoạt môi trường ảo
+
+
 
 ```bash
 python -m venv venv
@@ -35,7 +35,7 @@ source venv/bin/activate
 
 ```
 
-### 2. Cài đặt các gói cần thiết
+
 
 Sau khi kích hoạt môi trường ảo, cài đặt các gói từ file `requirements.txt`:
 
@@ -45,7 +45,7 @@ pip install -r requirements.txt
 
 ```
 
-### 3. Chạy ứng dụng
+
 
 Sau khi cài đặt, khởi động ứng dụng bằng lệnh sau:
 
@@ -59,7 +59,7 @@ python main_app.py
 
 ---
 
-## Các chức năng chính
+
 
 1\. **Nhận diện khuôn mặt, tuổi và giới tính (face_detect_camera)**  
 
@@ -130,6 +130,6 @@ python main_app.py
     Áp dụng phương pháp Watershed để phân đoạn các vùng khác nhau trên ảnh, giúp phân tích hình dạng và cấu trúc đối tượng.
 ---
 
-## Kết luận
+
 
 Dự án **Bộ công cụ xử lý cơ bản ảnh bằng Python** cung cấp các chức năng xử lý ảnh thiết yếu, phục vụ việc học tập và nghiên cứu trong lĩnh vực xử lý ảnh. Bộ công cụ này phù hợp với yêu cầu của bài tập lớn môn Xử lý ảnh và có thể mở rộng trong các dự án phân tích và nhận dạng hình ảnh.

@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+
 import cv2
 import sys
 import os
 import random
 
-# Đường dẫn tới cascade để phát hiện khuôn mặt
-cascade_path = "./cascades/haarcascade_frontalface_alt.xml"  # Đảm bảo đường dẫn đúng tới tệp cascade
-color = (255, 255, 255)  # Màu của hình chữ nhật để phát hiện khuôn mặt
+
+cascade_path = "./cascades/haarcascade_frontalface_alt.xml"  
+color = (255, 255, 255)  
 
 def face_detect_draw_rectangle(file):
     image = cv2.imread(file)
@@ -27,21 +27,21 @@ if __name__ == '__main__':
         print("Usage: $ python " + param[0] + " sample.jpg")
         quit()
 
-    # Phát hiện khuôn mặt
+    
     output_img = face_detect_draw_rectangle(param[1])
 
-    # Tạo thư mục output/face nếu chưa tồn tại
+    
     output_dir = 'output/face'
     os.makedirs(output_dir, exist_ok=True)
 
-    # Tạo đường dẫn file kết quả với tiền tố 'facedetect_'
+    
     output_path = os.path.join(output_dir, 'facedetect_' + os.path.basename(param[1]))
 
-    # Kiểm tra và thêm hậu tố nếu file đã tồn tại
+    
     while os.path.exists(output_path):
         suffix = random.randint(1000, 9999)
         output_path = os.path.join(output_dir, f'facedetect_{suffix}_' + os.path.basename(param[1]))
 
-    # Lưu ảnh kết quả
+    
     cv2.imwrite(output_path, output_img)
     print(f"Face-detected image saved to {output_path}")

@@ -1,6 +1,6 @@
 [home](https://github.com/karaage0703/python-image-processing)
 
-# python-image-processing-sample
+
 
 - [resize](./resize.md)
 - [photo synthesis](./photo_cat.md)

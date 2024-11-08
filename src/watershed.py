@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+
 import cv2
 import sys
 import numpy as np
 import os
 
-# python .\watershed.py .\test.jpg
+
 def watershed(src):
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     _, bin_img = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
