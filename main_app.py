@@ -1,12 +1,14 @@
 import tkinter as tk
-from tkinter import filedialog, ttk, messagebox
+from tkinter import filedialog, ttk, messagebox, colorchooser
 from PIL import Image, ImageTk
+
 import cv2
 import numpy as np
 import os
 import sys
 
 # Import các hàm xử lý ảnh
+
 from color_gray import color_gray
 from color_sepia import color_sepia
 from color_swap import color_swap
@@ -18,6 +20,9 @@ from face_detection_camera import face_detect_camera
 from photo_cat import combine_photos
 # Bộ lọc 3x3
 from filter_3by3 import apply_3x3_filter
+from photo_date_print import print_text
+from watershed import watershed
+
 
 def measure_color_average(image_path, color_space="rgb"):
     # Đọc ảnh
@@ -56,6 +61,12 @@ class ImageProcessorApp:
         self.root = root
         self.root.title("Image Processing GUI")
         self.root.geometry("1000x600")
+
+
+        self.is_sift_feature_matching = False
+        self.image_selection_stage = 1  # Trạng thái ban đầu là chọn ảnh đầu tiên
+        self.image_path1 = None  # Đường dẫn cho ảnh thứ nhất
+        self.image_path2 = None  # Đường dẫn cho ảnh thứ hai
 
         # Các biến để lưu trữ ảnh gốc và ảnh xử lý
         self.original_image = None
@@ -114,15 +125,47 @@ class ImageProcessorApp:
     def load_image(self):
         file_path = filedialog.askopenfilename()
         if file_path:
-            self.image_path = file_path
-            self.original_image = cv2.imread(file_path)
-            if self.original_image is None:
-                print(f"Không thể mở tệp ảnh: {file_path}")
-                return
-            self.show_image(self.original_image, self.original_canvas)
-            self.processed_image = None
-            self.processed_canvas.config(image='')
+            if self.is_sift_feature_matching:
+                # Nếu đang ở chế độ SIFT, chọn hai ảnh liên tiếp
+                if self.image_selection_stage == 1:
+                    # Lưu đường dẫn ảnh thứ nhất
+                    self.image_path1 = file_path
+                    self.original_image = cv2.imread(file_path)
+                    if self.original_image is None:
+                        print(f"Không thể mở tệp ảnh: {file_path}")
+                        return
+                    self.show_image(self.original_image, self.original_canvas)
+                    print("Ảnh thứ nhất đã được chọn.")
+                    self.image_selection_stage = 2  # Chuyển sang chọn ảnh thứ hai
 
+                elif self.image_selection_stage == 2:
+                    # Lưu đường dẫn ảnh thứ hai
+                    self.image_path2 = file_path
+                    self.processed_image = cv2.imread(file_path)
+                    if self.processed_image is None:
+                        print(f"Không thể mở tệp ảnh: {file_path}")
+                        return
+                    self.show_image(self.processed_image, self.processed_canvas)
+                    print("Ảnh thứ hai đã được chọn.")
+                    self.image_selection_stage = 1  # Trở về chọn ảnh thứ nhất để lần sau
+                    # Thực hiện chức năng SIFT ngay sau khi chọn hai ảnh
+                    self.apply_function()
+            else:
+                # Cho các chức năng khác, chỉ chọn một ảnh
+                self.image_path = file_path
+                self.original_image = cv2.imread(file_path)
+                if self.original_image is None:
+                    print(f"Không thể mở tệp ảnh: {file_path}")
+                    return
+                self.show_image(self.original_image, self.original_canvas)
+                self.processed_image = None
+                self.processed_canvas.config(image='')
+
+    def resize_image(self, src, w_ratio, h_ratio):
+        """Resize image based on width and height ratio."""
+        height, width = src.shape[:2]
+        resized_img = cv2.resize(src, (int(width * w_ratio / 100), int(height * h_ratio / 100)))
+        return resized_img
     def select_image_for_combine(self):
         file_path = filedialog.askopenfilename(title="Chọn một ảnh")
         if file_path:
@@ -164,6 +207,60 @@ class ImageProcessorApp:
             self.show_image(self.processed_image, self.processed_canvas)
             print("Ảnh đã được kết hợp và hiển thị.")
             self.selected_images.clear()  # Xóa danh sách ảnh sau khi kết hợp
+
+    def sift_matching(self, img1_path, img2_path):
+        # Đọc ảnh từ đường dẫn
+        img1 = cv2.imread(img1_path)
+        img2 = cv2.imread(img2_path)
+        if img1 is None or img2 is None:
+            messagebox.showerror("Error", "Không thể mở một hoặc cả hai ảnh.")
+            return None
+
+        gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+        gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+        # Tạo đối tượng SIFT và tìm keypoints, descriptors
+        sift = cv2.SIFT_create()
+        kp1, des1 = sift.detectAndCompute(gray1, None)
+        kp2, des2 = sift.detectAndCompute(gray2, None)
+
+        # Khớp các mô tả đặc trưng giữa hai ảnh
+        matcher = cv2.DescriptorMatcher_create("FlannBased")
+        matches = matcher.match(des1, des2)
+
+        # Vẽ các điểm đặc trưng và khớp trên ảnh
+        output_img = self.drawMatches(img1, kp1, img2, kp2, matches[:100])
+
+        # Tạo và lưu ảnh kết quả
+        output_dir = 'output/other'
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, 'matched_features.jpg')
+        cv2.imwrite(output_path, output_img)
+        print(f"Matched features image saved to {output_path}")
+
+        return output_img  # Trả về ảnh kết quả để hiển thị
+
+    def drawMatches(self, img1, kp1, img2, kp2, matches):
+        rows1, cols1 = img1.shape[:2]
+        rows2, cols2 = img2.shape[:2]
+
+        # Tạo ảnh kết hợp từ hai ảnh đầu vào
+        out = np.zeros((max([rows1, rows2]), cols1 + cols2, 3), dtype='uint8')
+        out[:rows1, :cols1, :] = img1
+        out[:rows2, cols1:cols1 + cols2, :] = img2
+
+        # Vẽ các điểm đặc trưng và các đường nối giữa chúng
+        for mat in matches:
+            img1_idx = mat.queryIdx
+            img2_idx = mat.trainIdx
+            (x1, y1) = kp1[img1_idx].pt
+            (x2, y2) = kp2[img2_idx].pt
+
+            cv2.circle(out, (int(x1), int(y1)), 4, (255, 0, 0), 1)
+            cv2.circle(out, (int(x2) + cols1, int(y2)), 4, (255, 0, 0), 1)
+            cv2.line(out, (int(x1), int(y1)), (int(x2) + cols1, int(y2)), (255, 0, 0), 1)
+
+        return out
 
     def apply_function(self):
         if self.original_image is None and self.function_var.get() != "Combine Photos":
@@ -284,15 +381,106 @@ class ImageProcessorApp:
                 self.show_image(self.processed_image, self.processed_canvas)
                 print("Ảnh đã được kết hợp và hiển thị.")
             return
+        elif selected_function == "Print Text":
+            # Lấy giá trị văn bản từ ô nhập liệu
+            text = self.text_entry.get()
+
+            # Sử dụng màu chữ được chọn (nếu có) hoặc mặc định là trắng
+            font_color = getattr(self, 'font_color', (255, 255, 255))
+
+            try:
+                font_size = int(self.font_size_entry.get())
+            except ValueError:
+                messagebox.showerror("Error", "Vui lòng nhập kích thước hợp lệ")
+                return
+
+            # Gọi hàm `print_text` với các tham số từ người dùng, bao gồm `font_color`
+            output_img = print_text(self.image_path, text, font_color=font_color, font_size=font_size)
+            prefix = "text_printed"  # Gán giá trị prefix để tránh lỗi UnboundLocalError
+
+            # Hiển thị và lưu ảnh kết quả
+            if output_img is not None and prefix is not None:
+                self.processed_image = output_img
+                self.show_image(self.processed_image, self.processed_canvas)
+                self.save_processed_image(prefix)
+                print("Ảnh có văn bản đã được lưu.")
+        elif selected_function == "Resize Image":
+            try:
+                w_ratio = int(self.w_ratio_entry.get())
+                h_ratio = int(self.h_ratio_entry.get())
+            except ValueError:
+                messagebox.showerror("Error", "Vui lòng nhập tỷ lệ hợp lệ.")
+                return
+
+            # Gọi hàm resize_image với self
+            output_img = self.resize_image(self.original_image, w_ratio, h_ratio)
+            if output_img is not None:
+                self.processed_image = output_img
+                self.show_image(self.processed_image, self.processed_canvas)
+                prefix = "resized"  # Gán giá trị cho prefix
+                self.save_processed_image(prefix)
+                print("Ảnh đã được thay đổi kích thước và lưu lại.")
+        elif selected_function == "SIFT Feature Matching":
+
+            if self.image_path1 and self.image_path2:
+
+                output_img = self.sift_matching(self.image_path1, self.image_path2)
+
+                if output_img is not None:
+                    self.processed_image = output_img
+
+                    self.show_image(self.processed_image, self.processed_canvas)
+
+                    print("Ảnh khớp tính năng đã được hiển thị và lưu lại.")
+
+            else:
+
+                messagebox.showerror("Lỗi", "Vui lòng chọn đủ cả hai ảnh trước khi áp dụng.")
+        elif selected_function == "Watershed":
+            # Xử lý bằng watershed
+            markers, output_img = watershed(self.original_image)
+
+            # Lưu và hiển thị kết quả
+            self.processed_image = output_img
+            self.show_image(self.processed_image, self.processed_canvas)
+            self.save_processed_image("watershed_image")
+
+            # Lưu markers nếu cần
+            output_dir = 'output/other'
+            os.makedirs(output_dir, exist_ok=True)
+            markers_path = os.path.join(output_dir, "watershed_markers_" + os.path.basename(self.image_path))
+            cv2.imwrite(markers_path, markers)
+            print(f"Markers saved to {markers_path}")
+
+            print("Watershed processing completed and images saved.")
+            return
+
+
+
+
+
+
 
         else:
             print("Vui lòng chọn chức năng hợp lệ.")
             return
 
+        if selected_function not in ["Print Text", "Combine Photos", "Average Color"]:
+            # Hiển thị và lưu ảnh đã xử lý nếu `prefix` được gán trước đó.
+            if 'output_img' in locals():
+                self.processed_image = output_img
+                self.show_image(self.processed_image, self.processed_canvas)
+                if 'prefix' in locals():
+                    self.save_processed_image(prefix)
+
+
         # Hiển thị và lưu ảnh đã xử lý
-        self.processed_image = output_img
-        self.show_image(self.processed_image, self.processed_canvas)
-        self.save_processed_image(prefix)
+        if 'output_img' in locals() and output_img is not None:
+            self.processed_image = output_img
+            self.show_image(self.processed_image, self.processed_canvas)
+            # Chỉ lưu nếu prefix đã được định nghĩa
+            if 'prefix' in locals():
+                self.save_processed_image(prefix)
 
     def save_processed_image(self, prefix):
         output_dir = 'output/face'
@@ -310,6 +498,15 @@ class ImageProcessorApp:
         cv2.imwrite(output_path, self.processed_image)
         print(f"Ảnh {prefix} đã được lưu vào {output_path}")
 
+    def choose_color(self):
+        color_code = colorchooser.askcolor(title="Chọn màu chữ")
+        if color_code[0] is not None:
+            # Lưu giá trị RGB được chọn và hiển thị màu đã chọn trên giao diện
+            self.font_color = tuple(map(int, color_code[0]))  # Lưu màu RGB dưới dạng tuple (R, G, B)
+            self.color_display.config(bg=color_code[1])  # Hiển thị màu đã chọn
+
+
+
     def create_widgets(self):
         self.function_frame = tk.Frame(self.center_frame)
         self.function_frame.pack()
@@ -321,7 +518,7 @@ class ImageProcessorApp:
         self.function_var.set("Grayscale")
 
         functions = ["Grayscale", "Sepia", "Color Swap", "Extract Color", "Face Crop", "Face Crop (Raspi)", "Face Detection", "Face Detect (Save)"
-            , "Face Detect (Draw Rectangle)", "3x3 Filter", "Average Color" , "Combine Photos"]
+            , "Face Detect (Draw Rectangle)", "3x3 Filter", "Average Color" , "Combine Photos","Print Text" , "Resize Image" , "SIFT Feature Matching" , "Watershed"]
 
         self.function_menu = ttk.Combobox(self.function_frame, textvariable=self.function_var, values=functions, state="readonly")
         self.function_menu.pack(pady=5)
@@ -399,6 +596,65 @@ class ImageProcessorApp:
             color_space_menu = ttk.Combobox(self.params_frame, textvariable=self.color_space_var, values=color_choices,
                                             state="readonly")
             color_space_menu.pack(side=tk.LEFT)
+
+
+        elif selected_function == "Print Text":
+
+            # Trường nhập liệu cho văn bản
+
+            text_label = tk.Label(self.params_frame, text="Text:")
+
+            text_label.pack(side=tk.LEFT)
+
+            self.text_entry = tk.Entry(self.params_frame, width=20)
+
+            self.text_entry.pack(side=tk.LEFT, padx=5)
+
+            # Nút chọn màu sắc
+
+            color_label = tk.Label(self.params_frame, text="Color:")
+
+            color_label.pack(side=tk.LEFT, padx=5)
+
+            self.color_display = tk.Label(self.params_frame, width=3, height=1, bg="#ffffff")
+
+            self.color_display.pack(side=tk.LEFT)
+
+            color_button = tk.Button(self.params_frame, text="Chọn màu", command=self.choose_color)
+
+            color_button.pack(side=tk.LEFT, padx=5)
+
+            # Trường nhập liệu cho kích cỡ chữ
+
+            font_size_label = tk.Label(self.params_frame, text="Font Size:")
+
+            font_size_label.pack(side=tk.LEFT, padx=5)
+
+            self.font_size_entry = tk.Entry(self.params_frame, width=5)
+
+            self.font_size_entry.insert(0, "20")  # Kích thước mặc định
+
+            self.font_size_entry.pack(side=tk.LEFT)
+
+        elif selected_function == "Resize Image":
+            w_ratio_label = tk.Label(self.params_frame, text="Width Ratio (%):")
+            w_ratio_label.pack(side=tk.LEFT)
+            self.w_ratio_entry = tk.Entry(self.params_frame, width=5)
+            self.w_ratio_entry.insert(0, "100")  # Giá trị mặc định
+            self.w_ratio_entry.pack(side=tk.LEFT, padx=5)
+
+            h_ratio_label = tk.Label(self.params_frame, text="Height Ratio (%):")
+            h_ratio_label.pack(side=tk.LEFT)
+            self.h_ratio_entry = tk.Entry(self.params_frame, width=5)
+            self.h_ratio_entry.insert(0, "100")  # Giá trị mặc định
+            self.h_ratio_entry.pack(side=tk.LEFT)
+        elif selected_function == "SIFT Feature Matching":
+                self.is_sift_feature_matching = True
+                self.image_selection_stage = 1  # Đặt lại để chọn từ đầu
+                self.image_path1 = None
+                self.image_path2 = None
+        else:
+            self.is_sift_feature_matching = False
 
     def open_camera_face_detection(self):
         face_detect_camera()
