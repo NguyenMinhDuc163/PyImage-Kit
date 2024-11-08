@@ -63,9 +63,12 @@ target/
 
 
 .DS_Store
+<<<<<<< HEAD
 /output/color/*
 /output/face/*
 /output/other/*
 /output/photo/*
 /output/resize/*
+=======
+>>>>>>> 683f0ae (ignore file)
 
