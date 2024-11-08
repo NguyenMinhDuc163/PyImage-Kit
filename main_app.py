@@ -303,6 +303,7 @@ class ImageProcessorApp:
 
     def apply_function(self):
         if self.original_image is None and self.function_var.get() != "Combine Photos":
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn ảnh trước khi áp dụng chức năng.")
             print("Vui lòng chọn ảnh trước!")
             return
 
@@ -678,7 +679,7 @@ class ImageProcessorApp:
 
             color_button.pack(side=tk.LEFT, padx=5)
 
-            
+
 
             font_size_label = tk.Label(self.params_frame, text="Font Size:")
 
