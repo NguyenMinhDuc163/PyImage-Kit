@@ -9,20 +9,21 @@ import sys
 
 # Import các hàm xử lý ảnh
 
-from color_gray import color_gray
-from color_sepia import color_sepia
-from color_swap import color_swap
-from extract_color import extract_color
-from face_crop import detect
-from face_crop_raspi import face_detect
-from face_detection import face_detect_draw_rectangle
-from face_detection_camera import face_detect_camera
-from photo_cat import combine_photos
+from src.color_gray import color_gray
+from src.color_sepia import color_sepia
+from src.color_swap import color_swap
+from src.extract_color import extract_color
+from src.face_crop import detect
+from src.face_crop_raspi import face_detect
+from src.face_detection import face_detect_draw_rectangle
+from src.face_detection_camera import face_detect_camera
+from src.photo_cat import combine_photos
 # Bộ lọc 3x3
-from filter_3by3 import apply_3x3_filter
-from photo_date_print import print_text
-from watershed import watershed
-from photo_exif_date_print import get_date_of_image, put_date, save_with_unique_name, get_exif_of_image
+from src.filter_3by3 import apply_3x3_filter
+from src.photo_date_print import print_text
+from src.watershed import watershed
+from src.photo_exif_date_print import get_date_of_image, put_date, save_with_unique_name, get_exif_of_image
+
 
 
 def measure_color_average(image_path, color_space="rgb"):
@@ -510,15 +511,9 @@ class ImageProcessorApp:
                     print("Ảnh đã được thêm ngày EXIF và lưu lại.")
             else:
                 print("Không tìm thấy ngày trong dữ liệu EXIF của ảnh.")
-
-
-
-
-
-
-
-
-
+        elif selected_function == "Face Detection":
+            output_img = face_detect_draw_rectangle(self.image_path)
+            prefix = 'facedetect'
         else:
             print("Vui lòng chọn chức năng hợp lệ.")
             return

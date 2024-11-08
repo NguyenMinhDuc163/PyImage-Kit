@@ -63,3 +63,8 @@ target/
 
 # For Mac
 .DS_Store
+/output/color/
+/output/face/
+/output/other/
+/output/photo/
+/output/resize/

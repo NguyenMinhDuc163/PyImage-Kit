@@ -4,8 +4,6 @@ import sys
 import os
 import random
 
-# python .\face_detection.py .\test.jpg
-
 # Đường dẫn tới cascade để phát hiện khuôn mặt
 cascade_path = "./cascades/haarcascade_frontalface_alt.xml"  # Đảm bảo đường dẫn đúng tới tệp cascade
 color = (255, 255, 255)  # Màu của hình chữ nhật để phát hiện khuôn mặt
@@ -30,7 +28,7 @@ if __name__ == '__main__':
         quit()
 
     # Phát hiện khuôn mặt
-    output_img = face_detect(param[1])
+    output_img = face_detect_draw_rectangle(param[1])
 
     # Tạo thư mục output/face nếu chưa tồn tại
     output_dir = 'output/face'
