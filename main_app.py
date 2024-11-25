@@ -571,10 +571,9 @@ class ImageProcessorApp:
         self.function_var = tk.StringVar()
         self.function_var.set("Grayscale")
 
-        functions = ["Grayscale", "Sepia", "Color Swap", "Extract Color", "Face Crop", "Face Crop (Raspi)", "Face Detection", "Face Detect (Save)"
-            , "Face Detect (Draw Rectangle)", "3x3 Filter", "Average Color" , "Combine Photos","Print Text" , "Resize Image" , "SIFT Feature Matching" ,
-                     "Watershed", "Print Date from EXIF"]
 
+        functions = ["Grayscale", "Sepia", "Face Crop", "Face Crop (Raspi)", "Face Detection", "Resize Image", "3x3 Filter",
+                     "Print Text", "SIFT Feature Matching",]
         self.function_menu = ttk.Combobox(self.function_frame, textvariable=self.function_var, values=functions, state="readonly")
         self.function_menu.pack(pady=5)
         self.function_menu.bind("<<ComboboxSelected>>", self.on_function_select)
